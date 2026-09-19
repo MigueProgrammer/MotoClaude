@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MotoCentro Colombia — Concesionario Multimarca</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.462.0/umd/lucide.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          obsidian: '#0C0E11',
+          coal: '#15181D',
+          coal2: '#1B1F25',
+          line: '#262B32',
+          chrome: '#C7CDD6',
+          ember: '#FF5A1F',
+          emberdim: '#7A3117',
+        },
+        fontFamily: {
+          display: ['Rajdhani', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { background:#0C0E11; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #0C0E11; }
+  ::-webkit-scrollbar-thumb { background: #2A2F37; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #FF5A1F; }
+
+  .brand-chip[data-active="true"] { border-color: var(--brand-color, #FF5A1F); box-shadow: 0 0 0 1px var(--brand-color, #FF5A1F) inset, 0 0 18px -4px var(--brand-color, #FF5A1F); }
+  .brand-chip[data-active="true"] .chip-dot { background: var(--brand-color, #FF5A1F); }
+
+  .moto-card { transition: transform .35s cubic-bezier(.2,.8,.2,1), border-color .35s ease, box-shadow .35s ease; }
+  .moto-card:hover { transform: translateY(-6px); border-color: #3A4048; box-shadow: 0 24px 48px -20px rgba(0,0,0,.7); }
+  .moto-visual svg { transition: transform .5s ease; }
+  .moto-card:hover .moto-visual svg { transform: scale(1.05) translateY(-2px); }
+
+  .modal-backdrop { backdrop-filter: blur(6px); background: rgba(6,7,9,.82); }
+  .modal-panel { animation: riseIn .38s cubic-bezier(.2,.8,.2,1); }
+  @keyframes riseIn { from { opacity:0; transform: translateY(24px) scale(.98); } to { opacity:1; transform: translateY(0) scale(1); } }
+
+  .fade-in { animation: fadeIn .3s ease both; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  .spec-row:nth-child(even) { background: rgba(255,255,255,.02); }
+
+  .num { font-variant-numeric: tabular-nums; }
+
+  .hero-glow {
+    background:
+      radial-gradient(60% 60% at 15% 20%, rgba(255,90,31,.16), transparent 60%),
+      radial-gradient(50% 50% at 85% 10%, rgba(199,205,214,.08), transparent 60%);
+  }
+
+  .compare-check { accent-color: #FF5A1F; }
+
+  input:focus, button:focus-visible, [tabindex]:focus-visible { outline: 2px solid #FF5A1F; outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
+
+  .scrollbar-thin::-webkit-scrollbar { height: 6px; }
+</style>
+</head>
+
+<body class="bg-obsidian text-chrome font-body antialiased">
+
+<!-- ============ HEADER ============ -->
+<header class="sticky top-0 z-40 border-b border-line/80 bg-obsidian/90 backdrop-blur-md">
+  <div class="max-w-7xl mx-auto px-4 md:px-6">
+    <div class="flex items-center justify-between h-16 gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-md bg-ember/10 border border-ember/40 flex items-center justify-center">
+          <i data-lucide="gauge-circle" class="w-5 h-5 text-ember"></i>
+        </div>
+        <div class="leading-none">
+          <p class="font-display font-700 text-lg tracking-wide text-white">MOTOCENTRO<span class="text-ember">.</span></p>
+          <p class="text-[10px] text-chrome/50 tracking-[0.2em]">CONCESIONARIO MULTIMARCA · COLOMBIA</p>
+        </div>
+      </div>
+
+      <div class="hidden md:flex items-center relative flex-1 max-w-sm">
+        <i data-lucide="search" class="w-4 h-4 text-chrome/40 absolute left-3"></i>
+        <input id="searchInput" type="text" placeholder="Buscar por modelo, marca o cilindraje..."
+          class="w-full bg-coal border border-line rounded-full py-2 pl-9 pr-4 text-sm text-white placeholder:text-chrome/35 focus:border-ember transition-colors">
+      </div>
+
+      <button id="compareNavBtn" class="hidden md:flex items-center gap-2 text-sm text-chrome/70 hover:text-white transition-colors relative">
+        <i data-lucide="git-compare" class="w-4 h-4"></i>
+        Comparar
+        <span id="compareNavCount" class="hidden absolute -top-2 -right-3 bg-ember text-white text-[10px] font-bold w-4 h-4 rounded-full items-center justify-center">0</span>
+      </button>
+    </div>
+
+    <div class="md:hidden pb-3">
+      <div class="flex items-center relative">
+        <i data-lucide="search" class="w-4 h-4 text-chrome/40 absolute left-3"></i>
+        <input id="searchInputMobile" type="text" placeholder="Buscar moto, marca o cc..."
+          class="w-full bg-coal border border-line rounded-full py-2 pl-9 pr-4 text-sm text-white placeholder:text-chrome/35 focus:border-ember transition-colors">
+      </div>
+    </div>
+  </div>
+
+  <!-- Brand filter strip -->
+  <div class="border-t border-line/70 bg-coal/60">
+    <div id="brandStrip" class="max-w-7xl mx-auto px-4 md:px-6 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-thin"></div>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="relative overflow-hidden hero-glow border-b border-line">
+  <div class="max-w-7xl mx-auto px-4 md:px-6 pt-14 pb-16 md:pt-20 md:pb-24 relative z-10">
+    <div class="flex items-center gap-2 text-ember text-xs tracking-widest font-display font-600 mb-4">
+      <span class="w-8 h-px bg-ember"></span> INVENTARIO EN VIVO · 25 MOTOCICLETAS
+    </div>
+    <h1 class="font-display font-700 text-4xl md:text-6xl text-white leading-[1.05] max-w-3xl">
+      Cinco marcas. Un solo lugar<br class="hidden md:block"> para elegir tu próxima moto.
+    </h1>
+    <p class="mt-5 text-chrome/60 max-w-xl text-[15px] leading-relaxed">
+      Ficha técnica real, comparador lado a lado y cotización directa por WhatsApp.
+      Yamaha, Honda, AKT, Bajaj/Kymco y Kawasaki — todo el catálogo colombiano en un panel.
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href="#catalog" class="inline-flex items-center gap-2 bg-ember hover:bg-orange-500 transition-colors text-white font-display font-600 tracking-wide px-6 py-3 rounded-md">
+        <i data-lucide="layout-grid" class="w-4 h-4"></i> Ver catálogo completo
+      </a>
+      <button id="heroCompareBtn" class="inline-flex items-center gap-2 border border-line hover:border-chrome/50 transition-colors text-white font-display font-600 tracking-wide px-6 py-3 rounded-md">
+        <i data-lucide="scale" class="w-4 h-4"></i> Comparar modelos
+      </button>
+    </div>
+
+    <div class="mt-12 grid grid-cols-3 md:grid-cols-5 gap-3 max-w-3xl" id="heroBrandRow"></div>
+  </div>
+</section>
+
+<!-- ============ CATALOG ============ -->
+<main id="catalog" class="max-w-7xl mx-auto px-4 md:px-6 py-12">
+  <div class="flex items-end justify-between mb-6 gap-4 flex-wrap">
+    <div>
+      <h2 class="font-display font-700 text-2xl text-white">Catálogo</h2>
+      <p id="resultCount" class="text-sm text-chrome/50 mt-1">25 motocicletas disponibles</p>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-chrome/50">
+      <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5"></i>
+      Clic en una tarjeta para ver la ficha técnica completa
+    </div>
+  </div>
+
+  <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+
+  <div id="emptyState" class="hidden text-center py-24">
+    <i data-lucide="search-x" class="w-10 h-10 text-chrome/30 mx-auto mb-3"></i>
+    <p class="text-chrome/50">No encontramos motos que coincidan con tu búsqueda.</p>
+  </div>
+</main>
+
+<footer class="border-t border-line mt-10 bg-coal/40">
+  <div class="max-w-7xl mx-auto px-4 md:px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-md bg-ember/10 border border-ember/40 flex items-center justify-center">
+        <i data-lucide="gauge-circle" class="w-4 h-4 text-ember"></i>
+      </div>
+      <p class="text-sm text-chrome/50">MotoCentro Colombia — precios sugeridos, sujetos a cambio sin previo aviso.</p>
+    </div>
+    <a href="https://wa.me/573001234567?text=Hola%2C%20quiero%20informaci%C3%B3n%20general%20del%20cat%C3%A1logo" target="_blank" rel="noopener"
+      class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 transition-colors text-white text-sm font-medium px-4 py-2.5 rounded-md">
+      <i data-lucide="message-circle" class="w-4 h-4"></i> Habla con un asesor
+    </a>
+  </div>
+</footer>
+
+<!-- ============ FLOATING COMPARE BAR ============ -->
+<div id="compareBar" class="hidden fixed bottom-0 inset-x-0 z-40 border-t border-line bg-coal/95 backdrop-blur-md">
+  <div class="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+    <div class="flex items-center gap-3">
+      <i data-lucide="scale" class="w-4 h-4 text-ember"></i>
+      <span class="text-sm text-white font-medium">Comparar motos</span>
+      <div id="compareThumbs" class="flex items-center gap-2"></div>
+      <span class="text-xs text-chrome/40">(<span id="compareCountBar">0</span>/3 seleccionadas)</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="clearCompareBtn" class="text-xs text-chrome/50 hover:text-white transition-colors px-3 py-2">Limpiar</button>
+      <button id="openCompareBtn" disabled class="bg-ember disabled:bg-line disabled:text-chrome/40 hover:bg-orange-500 transition-colors text-white text-sm font-display font-600 tracking-wide px-5 py-2.5 rounded-md">
+        Comparar ahora
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DETAIL MODAL ============ -->
+<div id="detailModal" class="hidden fixed inset-0 z-50 modal-backdrop items-start md:items-center justify-center p-0 md:p-6 overflow-y-auto">
+  <div id="detailPanel" class="modal-panel bg-coal w-full md:max-w-4xl md:rounded-xl border border-line overflow-hidden md:my-8"></div>
+</div>
+
+<!-- ============ COMPARE MODAL ============ -->
+<div id="compareModal" class="hidden fixed inset-0 z-50 modal-backdrop items-start justify-center p-0 md:p-6 overflow-y-auto">
+  <div id="comparePanel" class="modal-panel bg-coal w-full md:max-w-6xl md:rounded-xl border border-line overflow-hidden md:my-8"></div>
+</div>
+
+<script>
+/* =========================================================
+   DATOS
+   ========================================================= */
+const BRANDS = {
+  yamaha:  { name: 'Yamaha',            color: '#3B6BFF', logo: 'YAMAHA'  },
+  honda:   { name: 'Honda',             color: '#FF3355', logo: 'HONDA'   },
+  akt:     { name: 'AKT',               color: '#FFC233', logo: 'AKT'     },
+  bajaj:   { name: 'Bajaj / Kymco',     color: '#2ED9A3', logo: 'BJ·KY'   },
+  kawasaki:{ name: 'Kawasaki',          color: '#7ED321', logo: 'KAWASAKI'},
+};
+
+/* shape: 'sport' | 'naked' | 'scooter' | 'adventure' | 'enduro' — controla la ilustración vectorial */
+const MOTOS = [
+  // ---------- YAMAHA ----------
+  { id:'ym-xtz125', brand:'yamaha', model:'XTZ 125', price:10600000, cc:125, hp:10.0, torque:10.3, ignition:'Eléctrico', quickshifter:'No', gearbox:'5 velocidades', brakes:'Disco / Tambor', abs:false, weight:118, tank:10.5, fi:true, shape:'enduro',
+    segment:'Doble propósito urbana' },
+  { id:'ym-mt09sp', brand:'yamaha', model:'MT-09 SP', price:58000000, cc:889, hp:117.4, torque:93.0, ignition:'Eléctrico', quickshifter:'Sí', gearbox:'6 velocidades', brakes:'Doble disco ABS', abs:true, weight:193, tank:14, fi:true, shape:'naked',
+    segment:'Naked hypernaked' },
+  { id:'ym-yzfr3', brand:'yamaha', model:'YZF-R3', price:26500000, cc:321, hp:42.0, torque:29.6, ignition:'Eléctrico', quickshifter:'Opcional', gearbox:'6 velocidades', brakes:'Disco doble ABS', abs:true, weight:169, tank:14, fi:true, shape:'sport',
+    segment:'Deportiva' },
+  { id:'ym-nmax155', brand:'yamaha', model:'NMAX Connected 155', price:16100000, cc:155, hp:15.0, torque:13.9, ignition:'Eléctrico', quickshifter:'No', gearbox:'Automática CVT', brakes:'Disco doble ABS', abs:true, weight:127, tank:7.1, fi:true, shape:'scooter',
+    segment:'Scooter premium' },
+  { id:'ym-cryptonfi', brand:'yamaha', model:'Crypton FI', price:8400000, cc:106, hp:8.6, torque:8.5, ignition:'Eléctrico / Patada', quickshifter:'No', gearbox:'4 velocidades', brakes:'Tambor', abs:false, weight:99, tank:4.2, fi:true, shape:'naked',
+    segment:'Trabajo / economía' },
+
+  // ---------- HONDA ----------
+  { id:'hd-cb125f', brand:'honda', model:'CB125F', price:9100000, cc:125, hp:10.7, torque:10.4, ignition:'Eléctrico / Patada', quickshifter:'No', gearbox:'5 velocidades', brakes:'Disco / Tambor', abs:false, weight:117, tank:9.6, fi:true, shape:'naked',
+    segment:'Urbana / trabajo' },
+  { id:'hd-xr190l', brand:'honda', model:'XR 190L', price:13200000, cc:184, hp:15.5, torque:15.5, ignition:'Eléctrico', quickshifter:'No', gearbox:'5 velocidades', brakes:'Disco / Tambor', abs:false, weight:129, tank:12.5, fi:true, shape:'enduro',
+    segment:'Doble propósito' },
+  { id:'hd-cb300ftw', brand:'honda', model:'CB 300F Twister', price:19800000, cc:293, hp:27.0, torque:26.6, ignition:'Eléctrico', quickshifter:'No', gearbox:'6 velocidades', brakes:'Disco doble ABS', abs:true, weight:158, tank:12.8, fi:true, shape:'naked',
+    segment:'Naked media' },
+  { id:'hd-africatwin', brand:'honda', model:'Africa Twin CRF 1100L', price:78000000, cc:1084, hp:101.7, torque:105.0, ignition:'Eléctrico', quickshifter:'Sí', gearbox:'6 vel. (DCT opcional)', brakes:'Doble disco ABS', abs:true, weight:226, tank:18.8, fi:true, shape:'adventure',
+    segment:'Adventure' },
+  { id:'hd-xadv750', brand:'honda', model:'X-ADV 750', price:62000000, cc:745, hp:58.6, torque:69.0, ignition:'Eléctrico', quickshifter:'Sí', gearbox:'DCT automática', brakes:'Doble disco ABS', abs:true, weight:238, tank:13.1, fi:true, shape:'adventure',
+    segment:'Scooter adventure' },
+
+  // ---------- AKT ----------
+  { id:'akt-nkd125', brand:'akt', model:'NKD 125', price:5490000, cc:125, hp:9.8, torque:9.6, ignition:'Eléctrico', quickshifter:'No', gearbox:'5 velocidades', brakes:'Disco / Tambor', abs:false, weight:111, tank:4.3, fi:false, shape:'naked',
+    segment:'Naked económica' },
+  { id:'akt-cr4162', brand:'akt', model:'CR4 162', price:7200000, cc:162, hp:14.5, torque:13.5, ignition:'Eléctrico', quickshifter:'No', gearbox:'5 velocidades', brakes:'Disco doble', abs:false, weight:135, tank:12.0, fi:true, shape:'naked',
+    segment:'Naked deportiva' },
+  { id:'akt-ttdual200', brand:'akt', model:'TT Dual Sport 200', price:9500000, cc:197, hp:17.0, torque:15.8, ignition:'Eléctrico / Patada', quickshifter:'No', gearbox:'5 velocidades', brakes:'Disco / Disco', abs:false, weight:138, tank:12.5, fi:true, shape:'enduro',
+    segment:'Doble propósito' },
+  { id:'akt-flexled125', brand:'akt', model:'Flex LED 125', price:6100000, cc:125, hp:9.5, torque:9.3, ignition:'Eléctrico', quickshifter:'No', gearbox:'4 vel. semiautomática', brakes:'Tambor', abs:false, weight:102, tank:4.1, fi:false, shape:'naked',
+    segment:'Trabajo / economía' },
+  { id:'akt-dynpro125', brand:'akt', model:'Dynamic Pro 125', price:8200000, cc:125, hp:10.0, torque:9.8, ignition:'Eléctrico', quickshifter:'No', gearbox:'5 velocidades', brakes:'Disco / Tambor', abs:false, weight:113, tank:12.0, fi:false, shape:'naked',
+    segment:'Urbana' },
+
+  // ---------- BAJAJ / KYMCO (Auteco) ----------
+  { id:'bj-pulsarns200', brand:'bajaj', model:'Pulsar NS 200 FI ABS', price:15799000, cc:199.5, hp:24.5, torque:18.6, ignition:'Eléctrico', quickshifter:'No', gearbox:'6 velocidades', brakes:'Disco doble ABS', abs:true, weight:156, tank:12.0, fi:true, shape:'naked',
+    segment:'Naked deportiva' },
+  { id:'bj-boxerct100', brand:'bajaj', model:'Boxer CT 100 ES', price:6199000, cc:99.27, hp:7.9, torque:8.34, ignition:'Eléctrico / Patada', quickshifter:'No', gearbox:'4 velocidades', brakes:'Tambor', abs:false, weight:112, tank:8.5, fi:false, shape:'naked',
+    segment:'Trabajo / economía' },
+  { id:'bj-dominar400', brand:'bajaj', model:'Dominar 400 Volcano', price:20399000, cc:373.3, hp:39.4, torque:35.0, ignition:'Eléctrico', quickshifter:'Opcional', gearbox:'6 velocidades', brakes:'Disco doble ABS', abs:true, weight:193, tank:13.0, fi:true, shape:'adventure',
+    segment:'Touring deportiva' },
+  { id:'ky-agilityfusion', brand:'bajaj', model:'Kymco Agility Fusion 125', price:8900000, cc:125, hp:11.0, torque:10.4, ignition:'Eléctrico', quickshifter:'No', gearbox:'Automática CVT', brakes:'Disco / Tambor', abs:false, weight:108, tank:5.5, fi:true, shape:'scooter',
+    segment:'Scooter urbana' },
+  { id:'bj-pulsarn250', brand:'bajaj', model:'Pulsar N250', price:14500000, cc:249.07, hp:24.5, torque:21.5, ignition:'Eléctrico', quickshifter:'No', gearbox:'5 velocidades', brakes:'Disco doble ABS', abs:true, weight:164, tank:14.0, fi:true, shape:'naked',
+    segment:'Naked media' },
+
+  // ---------- KAWASAKI ----------
+  { id:'kw-ninja400', brand:'kawasaki', model:'Ninja 400 ABS', price:32000000, cc:399, hp:49.0, torque:38.0, ignition:'Eléctrico', quickshifter:'Opcional', gearbox:'6 velocidades', brakes:'Disco doble ABS', abs:true, weight:168, tank:14.0, fi:true, shape:'sport',
+    segment:'Deportiva' },
+  { id:'kw-z900', brand:'kawasaki', model:'Z900 ABS', price:56000000, cc:948, hp:125.0, torque:98.6, ignition:'Eléctrico', quickshifter:'Opcional', gearbox:'6 velocidades', brakes:'Disco doble ABS', abs:true, weight:212, tank:17.0, fi:true, shape:'naked',
+    segment:'Naked hypernaked' },
+  { id:'kw-versys650', brand:'kawasaki', model:'Versys 650', price:48000000, cc:649, hp:67.0, torque:64.0, ignition:'Eléctrico', quickshifter:'No', gearbox:'6 velocidades', brakes:'Disco doble ABS', abs:true, weight:216, tank:21.0, fi:true, shape:'adventure',
+    segment:'Adventure touring' },
+  { id:'kw-klx150l', brand:'kawasaki', model:'KLX 150L', price:14800000, cc:144, hp:11.9, torque:11.6, ignition:'Eléctrico / Patada', quickshifter:'No', gearbox:'5 velocidades', brakes:'Disco / Tambor', abs:false, weight:118, tank:6.9, fi:false, shape:'enduro',
+    segment:'Enduro' },
+  { id:'kw-zx10r', brand:'kawasaki', model:'Ninja ZX-10R', price:115000000, cc:998, hp:203.0, torque:114.9, ignition:'Eléctrico', quickshifter:'Sí', gearbox:'6 velocidades', brakes:'Disco doble ABS radial', abs:true, weight:207, tank:17.0, fi:true, shape:'sport',
+    segment:'Superbike' },
+];
+
+/* =========================================================
+   ILUSTRACIÓN VECTORIAL (reemplaza fotos externas)
+   Genera un icono de moto en SVG, coloreado por marca, según
+   la silueta del segmento. 100% local: nunca falla ni se
+   confunde de modelo.
+   ========================================================= */
+function motoIllustration(shape, color){
+  const wheelR = shape === 'scooter' ? 27 : 34;
+  const wheels = `
+    <circle cx="72" cy="168" r="${wheelR}" fill="none" stroke="${color}" stroke-width="6" opacity=".95"/>
+    <circle cx="72" cy="168" r="8" fill="${color}" opacity=".55"/>
+    <circle cx="322" cy="168" r="${wheelR}" fill="none" stroke="${color}" stroke-width="6" opacity=".95"/>
+    <circle cx="322" cy="168" r="8" fill="${color}" opacity=".55"/>`;
+
+  let body = '';
+  if (shape === 'sport'){
+    body = `
+      <path d="M72 168 L118 120 Q166 86 226 92 L296 102 Q322 110 322 134 L322 150" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M226 92 L258 64 L276 72 L296 102" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M118 120 L150 152 L204 152" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="248" y1="72" x2="234" y2="48" stroke="${color}" stroke-width="6" stroke-linecap="round"/>`;
+  } else if (shape === 'naked'){
+    body = `
+      <path d="M72 168 L112 130 L152 108 L190 108 L216 90" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M190 108 Q222 100 246 116 L282 120 Q322 128 322 150" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M112 130 L152 160 L212 160" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="216" y1="90" x2="198" y2="64" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="216" y1="90" x2="236" y2="70" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="108" cy="122" r="5.5" fill="${color}"/>`;
+  } else if (shape === 'scooter'){
+    body = `
+      <path d="M92 168 Q92 118 142 110 L250 106 Q300 106 322 140 L322 152" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M142 110 L152 78 L172 76" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="152" y1="78" x2="132" y2="62" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="182" y1="112" x2="182" y2="150" stroke="${color}" stroke-width="5" opacity=".55"/>`;
+  } else if (shape === 'adventure'){
+    body = `
+      <path d="M72 168 L102 120 L142 94 L192 90 L216 76" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M192 90 Q232 80 258 96 L294 106 Q322 116 322 148" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M102 120 L142 156 L208 156" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="216" y1="76" x2="202" y2="50" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="216" y1="76" x2="238" y2="56" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <path d="M58 152 L82 184" fill="none" stroke="${color}" stroke-width="5" opacity=".5"/>`;
+  } else {
+    body = `
+      <path d="M72 168 L106 124 L148 98 L184 98" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M184 98 Q214 90 238 104 L278 114 Q322 126 322 152" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M106 124 L140 158 L200 158" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round"/>
+      <line x1="184" y1="98" x2="170" y2="70" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+      <path d="M56 146 L88 116" fill="none" stroke="${color}" stroke-width="5" opacity=".6"/>`;
+  }
+
+  return `<svg viewBox="0 0 380 210" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">${wheels}${body}</svg>`;
+}
+
+function visualPanel(m, heightClass){
+  const b = BRANDS[m.brand];
+  return `
+  <div class="moto-visual relative ${heightClass} overflow-hidden flex items-center justify-center"
+    style="background: radial-gradient(120% 100% at 30% 15%, ${b.color}22, transparent 60%), linear-gradient(160deg, #171B21 0%, #0C0E11 100%);">
+    <div class="absolute inset-0 opacity-[0.14] pointer-events-none"
+      style="background-image: linear-gradient(${b.color} 1px, transparent 1px), linear-gradient(90deg, ${b.color} 1px, transparent 1px); background-size: 26px 26px;"></div>
+    <div class="absolute left-4 right-4 bottom-4 h-px" style="background:linear-gradient(90deg, transparent, ${b.color}99, transparent)"></div>
+    <div class="w-3/4 h-3/4 relative z-[1] drop-shadow-[0_8px_16px_rgba(0,0,0,.5)]">${motoIllustration(m.shape, b.color)}</div>
+  </div>`;
+}
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+const state = {
+  brand: 'all',
+  query: '',
+  compare: [], // array of moto ids, max 3
+};
+
+const WHATSAPP_NUMBER = '573001234567';
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function formatCOP(n){
+  return '$' + n.toLocaleString('es-CO') + ' COP';
+}
+
+function brandLogoMark(brandId, size='sm'){
+  const b = BRANDS[brandId];
+  const sizes = { sm: 'text-[10px] px-1.5 py-0.5', md: 'text-xs px-2 py-1', lg: 'text-base px-3 py-1.5' };
+  return `<span class="inline-flex items-center font-display font-700 tracking-wider rounded ${sizes[size]}"
+            style="color:${b.color}; background:${b.color}1A; border:1px solid ${b.color}55;">${b.logo}</span>`;
+}
+
+function highlightsFor(m){
+  const h = [];
+  if (m.quickshifter !== 'No') h.push({ icon:'zap', label: 'Con QuickShifter' });
+  if (m.abs) h.push({ icon:'shield-check', label: 'Frenos ABS' });
+  if (m.fi) h.push({ icon:'flame', label: 'Inyección Electrónica' });
+  if (m.gearbox.toLowerCase().includes('automática')) h.push({ icon:'refresh-cw', label: 'Transmisión Automática' });
+  if (m.ignition.includes('Patada')) h.push({ icon:'footprints', label: 'Arranque a Patada' });
+  return h;
+}
+
+function getFilteredMotos(){
+  const q = state.query.trim().toLowerCase();
+  return MOTOS.filter(m => {
+    const brandOk = state.brand === 'all' || m.brand === state.brand;
+    if (!brandOk) return false;
+    if (!q) return true;
+    const haystack = `${m.model} ${BRANDS[m.brand].name} ${m.cc}`.toLowerCase();
+    return haystack.includes(q);
+  });
+}
+
+function findMoto(id){ return MOTOS.find(m => m.id === id); }
+
+/* =========================================================
+   RENDER: BRAND STRIP + HERO ROW
+   ========================================================= */
+function renderBrandStrip(){
+  const strip = document.getElementById('brandStrip');
+  const all = `
+    <button data-brand="all" class="brand-chip shrink-0 flex items-center gap-2 border border-line rounded-full pl-2 pr-3.5 py-1.5 text-sm text-white/90 hover:border-chrome/50 transition-colors" data-active="${state.brand==='all'}">
+      <span class="chip-dot w-2 h-2 rounded-full bg-chrome/40"></span> Todas las marcas
+    </button>`;
+  const chips = Object.entries(BRANDS).map(([id, b]) => `
+    <button data-brand="${id}" style="--brand-color:${b.color}" class="brand-chip shrink-0 flex items-center gap-2 border border-line rounded-full pl-2 pr-3.5 py-1.5 text-sm text-white/90 hover:border-chrome/50 transition-colors" data-active="${state.brand===id}">
+      <span class="chip-dot w-2 h-2 rounded-full" style="background:${state.brand===id ? b.color : '#3A4048'}"></span> ${b.name}
+    </button>`).join('');
+  strip.innerHTML = all + chips;
+
+  strip.querySelectorAll('[data-brand]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.brand = btn.dataset.brand;
+      renderBrandStrip();
+      renderGrid();
+      document.getElementById('catalog').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+function renderHeroBrandRow(){
+  const row = document.getElementById('heroBrandRow');
+  row.innerHTML = Object.entries(BRANDS).map(([id,b]) => `
+    <button data-brand="${id}" class="group border border-line hover:border-chrome/40 rounded-lg py-3 flex items-center justify-center transition-colors bg-coal/60">
+      ${brandLogoMark(id,'md')}
+    </button>`).join('');
+  row.querySelectorAll('[data-brand]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.brand = btn.dataset.brand;
+      renderBrandStrip();
+      renderGrid();
+      document.getElementById('catalog').scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+  });
+}
+
+/* =========================================================
+   RENDER: GRID / CARDS
+   ========================================================= */
+function motoCard(m){
+  const inCompare = state.compare.includes(m.id);
+  const b = BRANDS[m.brand];
+  return `
+  <div class="moto-card fade-in group bg-coal2 border border-line rounded-xl overflow-hidden cursor-pointer flex flex-col" data-open="${m.id}">
+    <div class="relative">
+      ${visualPanel(m, 'h-44')}
+      <div class="absolute top-2.5 left-2.5">${brandLogoMark(m.brand,'sm')}</div>
+      <label class="absolute top-2.5 right-2.5 flex items-center gap-1.5 bg-obsidian/70 backdrop-blur px-2 py-1 rounded-md border border-line/80 cursor-pointer" data-stop>
+        <input type="checkbox" class="compare-check w-3.5 h-3.5" data-compare="${m.id}" ${inCompare ? 'checked' : ''}>
+        <span class="text-[10px] text-chrome/70">Comparar</span>
+      </label>
+    </div>
+    <div class="p-4 flex flex-col flex-1">
+      <p class="text-[11px] uppercase tracking-wider text-chrome/40">${m.segment}</p>
+      <h3 class="font-display font-700 text-lg text-white leading-tight mt-0.5">${m.model}</h3>
+
+      <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+        <div class="bg-obsidian/60 rounded-md py-1.5 border border-line/60">
+          <p class="text-[13px] font-semibold text-white num">${m.cc}</p>
+          <p class="text-[9px] text-chrome/40">cc</p>
+        </div>
+        <div class="bg-obsidian/60 rounded-md py-1.5 border border-line/60">
+          <p class="text-[13px] font-semibold text-white num">${m.hp}</p>
+          <p class="text-[9px] text-chrome/40">HP</p>
+        </div>
+        <div class="bg-obsidian/60 rounded-md py-1.5 border border-line/60">
+          <p class="text-[13px] font-semibold text-white num">${m.torque}</p>
+          <p class="text-[9px] text-chrome/40">Nm</p>
+        </div>
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-1.5">
+        ${highlightsFor(m).slice(0,2).map(h => `<span class="text-[10px] text-chrome/60 border border-line rounded-full px-2 py-0.5">${h.label}</span>`).join('')}
+      </div>
+
+      <div class="mt-auto pt-4 flex items-center justify-between">
+        <p class="font-display font-700 text-ember text-base num">${formatCOP(m.price)}</p>
+        <span class="text-chrome/40 group-hover:text-white transition-colors text-xs flex items-center gap-1">
+          Ver ficha <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  const list = getFilteredMotos();
+  document.getElementById('resultCount').textContent = `${list.length} motocicleta${list.length===1?'':'s'} disponible${list.length===1?'':'s'}`;
+  document.getElementById('emptyState').classList.toggle('hidden', list.length !== 0);
+  grid.innerHTML = list.map(motoCard).join('');
+  lucide.createIcons();
+
+  grid.querySelectorAll('[data-open]').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('[data-stop]')) return;
+      openDetail(card.dataset.open);
+    });
+  });
+  grid.querySelectorAll('[data-compare]').forEach(chk => {
+    chk.addEventListener('change', () => toggleCompare(chk.dataset.compare, chk));
+  });
+}
+
+/* =========================================================
+   COMPARE LOGIC
+   ========================================================= */
+function toggleCompare(id, checkboxEl){
+  const idx = state.compare.indexOf(id);
+  if (idx > -1){
+    state.compare.splice(idx, 1);
+  } else {
+    if (state.compare.length >= 3){
+      if (checkboxEl) checkboxEl.checked = false;
+      showToast('Puedes comparar máximo 3 motos a la vez.');
+      return;
+    }
+    state.compare.push(id);
+  }
+  syncCompareCheckboxes();
+  renderCompareBar();
+}
+
+function syncCompareCheckboxes(){
+  document.querySelectorAll('[data-compare]').forEach(chk => {
+    chk.checked = state.compare.includes(chk.dataset.compare);
+  });
+}
+
+function renderCompareBar(){
+  const bar = document.getElementById('compareBar');
+  const count = state.compare.length;
+  document.getElementById('compareCountBar').textContent = count;
+  document.getElementById('openCompareBtn').disabled = count < 2;
+
+  const navCount = document.getElementById('compareNavCount');
+  navCount.textContent = count;
+  navCount.classList.toggle('hidden', count === 0);
+  navCount.classList.toggle('flex', count > 0);
+
+  const thumbs = document.getElementById('compareThumbs');
+  thumbs.innerHTML = state.compare.map(id => {
+    const m = findMoto(id);
+    const b = BRANDS[m.brand];
+    return `<span class="hidden sm:inline-flex items-center gap-1.5 bg-obsidian border border-line rounded-full pl-1.5 pr-2 py-0.5 text-xs text-white/80">
+      <span class="w-4 h-4 rounded-full flex items-center justify-center" style="background:${b.color}33;border:1px solid ${b.color}"></span>
+      ${m.model}
+    </span>`;
+  }).join('');
+
+  bar.classList.toggle('hidden', count === 0);
+  bar.classList.toggle('flex', count > 0);
+  lucide.createIcons();
+}
+
+document.getElementById('clearCompareBtn').addEventListener('click', () => {
+  state.compare = [];
+  syncCompareCheckboxes();
+  renderCompareBar();
+});
+document.getElementById('openCompareBtn').addEventListener('click', openCompareModal);
+document.getElementById('heroCompareBtn').addEventListener('click', () => {
+  if (state.compare.length >= 2) openCompareModal();
+  else { document.getElementById('catalog').scrollIntoView({behavior:'smooth'}); showToast('Selecciona al menos 2 motos con "Comparar" para continuar.'); }
+});
+document.getElementById('compareNavBtn').addEventListener('click', () => {
+  if (state.compare.length >= 2) openCompareModal();
+  else { document.getElementById('catalog').scrollIntoView({behavior:'smooth'}); showToast('Selecciona al menos 2 motos con "Comparar" para continuar.'); }
+});
+
+/* =========================================================
+   DETAIL MODAL
+   ========================================================= */
+function specRow(label, value, icon){
+  return `
+  <div class="spec-row flex items-center justify-between px-4 py-2.5 rounded-md">
+    <span class="flex items-center gap-2 text-xs text-chrome/50"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i>${label}</span>
+    <span class="text-sm text-white font-medium num">${value}</span>
+  </div>`;
+}
+
+function openDetail(id){
+  const m = findMoto(id);
+  const b = BRANDS[m.brand];
+  const waText = encodeURIComponent(`Hola, quiero cotizar la ${b.name} ${m.model} (${formatCOP(m.price)}).`);
+
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="relative">
+      <button data-close-detail class="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-obsidian/70 border border-line flex items-center justify-center text-white hover:bg-obsidian transition-colors">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+      <div class="grid md:grid-cols-2">
+        <div class="relative">
+          ${visualPanel(m, 'h-64 md:h-full')}
+          <div class="absolute bottom-4 left-4">${brandLogoMark(m.brand,'lg')}</div>
+        </div>
+
+        <div class="p-6 md:p-7 md:max-h-[85vh] md:overflow-y-auto">
+          <p class="text-xs uppercase tracking-wider text-chrome/40">${m.segment}</p>
+          <h3 class="font-display font-700 text-3xl text-white mt-1">${m.model}</h3>
+          <p class="font-display font-700 text-ember text-2xl mt-2 num">${formatCOP(m.price)}</p>
+
+          <div class="flex flex-wrap gap-2 mt-4">
+            ${highlightsFor(m).map(h => `
+              <span class="inline-flex items-center gap-1.5 text-xs text-white bg-ember/10 border border-ember/40 rounded-full px-2.5 py-1">
+                <i data-lucide="${h.icon}" class="w-3 h-3 text-ember"></i>${h.label}
+              </span>`).join('')}
+          </div>
+
+          <div class="mt-6">
+            <p class="text-sm font-display font-600 text-white mb-2 tracking-wide">Ficha técnica</p>
+            <div class="border border-line rounded-lg overflow-hidden divide-y divide-line/60">
+              ${specRow('Cilindraje', m.cc + ' cc', 'cog')}
+              ${specRow('Potencia máxima', m.hp + ' HP', 'zap')}
+              ${specRow('Torque máximo', m.torque + ' Nm', 'wrench')}
+              ${specRow('Encendido', m.ignition, 'power')}
+              ${specRow('Quick Shifter', m.quickshifter, 'chevrons-up')}
+              ${specRow('Caja de cambios', m.gearbox, 'settings-2')}
+              ${specRow('Sistema de frenos', m.brakes, 'disc')}
+              ${specRow('Inyección electrónica', m.fi ? 'Sí' : 'No (carburador)', 'flame')}
+              ${specRow('Peso', m.weight + ' kg', 'weight')}
+              ${specRow('Capacidad de tanque', m.tank + ' L', 'fuel')}
+            </div>
+          </div>
+
+          <div class="mt-6 flex flex-col sm:flex-row gap-3">
+            <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${waText}" target="_blank" rel="noopener"
+              class="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 transition-colors text-white font-display font-600 tracking-wide px-5 py-3 rounded-md">
+              <i data-lucide="message-circle" class="w-4 h-4"></i> Cotizar por WhatsApp
+            </a>
+            <button data-add-compare="${m.id}" class="inline-flex items-center justify-center gap-2 border border-line hover:border-chrome/50 transition-colors text-white text-sm px-5 py-3 rounded-md">
+              <i data-lucide="scale" class="w-4 h-4"></i> Añadir a comparar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  const modal = document.getElementById('detailModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  lucide.createIcons();
+
+  modal.querySelectorAll('[data-close-detail]').forEach(b => b.addEventListener('click', closeDetail));
+  modal.querySelector('[data-add-compare]').addEventListener('click', (e) => {
+    toggleCompare(e.currentTarget.dataset.addCompare);
+    e.currentTarget.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Añadida`;
+    lucide.createIcons();
+  });
+}
+
+function closeDetail(){
+  const modal = document.getElementById('detailModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+document.getElementById('detailModal').addEventListener('click', (e) => {
+  if (e.target.id === 'detailModal') closeDetail();
+});
+
+/* =========================================================
+   COMPARE MODAL
+   ========================================================= */
+function compareRow(label, opts = {}){
+  const motos = state.compare.map(findMoto);
+  const values = motos.map(m => opts.get(m));
+
+  let best = null;
+  if (opts.higherIsBetter){
+    const nums = values.map(v => parseFloat(v));
+    best = Math.max(...nums);
+  }
+
+  return `
+  <tr class="border-b border-line/60">
+    <td class="py-3 pr-4 text-xs text-chrome/50 whitespace-nowrap sticky left-0 bg-coal">${label}</td>
+    ${motos.map((m,i) => {
+      const v = values[i];
+      const isBest = opts.higherIsBetter && parseFloat(v) === best && motos.length > 1 && new Set(values.map(parseFloat)).size > 1;
+      return `<td class="py-3 px-4 text-sm text-center ${isBest ? 'text-ember font-semibold' : 'text-white'} num">
+        ${v}${isBest ? ' 🏆' : ''}
+      </td>`;
+    }).join('')}
+  </tr>`;
+}
+
+function openCompareModal(){
+  const motos = state.compare.map(findMoto);
+  if (motos.length < 2) return;
+
+  const headerCells = motos.map(m => {
+    const b = BRANDS[m.brand];
+    return `
+    <th class="py-3 px-4 text-center min-w-[180px]">
+      <div class="mx-auto w-16 h-16 rounded-lg overflow-hidden border border-line mb-2 bg-obsidian">
+        ${visualPanel(m, 'h-16 w-16')}
+      </div>
+      <div class="flex justify-center mb-1">${brandLogoMark(m.brand,'sm')}</div>
+      <p class="font-display font-700 text-white text-sm leading-tight">${m.model}</p>
+    </th>`;
+  }).join('');
+
+  const rows = [
+    compareRow('Precio', { get: m => formatCOP(m.price) }),
+    compareRow('Cilindraje', { get: m => m.cc + ' cc' }),
+    compareRow('Potencia máxima', { get: m => m.hp + ' HP', higherIsBetter:true }),
+    compareRow('Torque máximo', { get: m => m.torque + ' Nm', higherIsBetter:true }),
+    compareRow('Encendido', { get: m => m.ignition }),
+    compareRow('Quick Shifter', { get: m => m.quickshifter }),
+    compareRow('Caja de cambios', { get: m => m.gearbox }),
+    compareRow('Frenos', { get: m => m.brakes }),
+    compareRow('Inyección electrónica', { get: m => m.fi ? 'Sí' : 'No' }),
+    compareRow('Peso', { get: m => m.weight + ' kg' }),
+    compareRow('Capacidad tanque', { get: m => m.tank + ' L' }),
+  ].join('');
+
+  document.getElementById('comparePanel').innerHTML = `
+    <div class="flex items-center justify-between px-5 py-4 border-b border-line sticky top-0 bg-coal z-10">
+      <div>
+        <p class="font-display font-700 text-lg text-white">Comparador de motocicletas</p>
+        <p class="text-xs text-chrome/50">${motos.length} modelos seleccionados · las mejores cifras se resaltan en naranja</p>
+      </div>
+      <button data-close-compare class="w-9 h-9 rounded-full bg-obsidian border border-line flex items-center justify-center text-white hover:bg-obsidian/70 transition-colors">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <div class="overflow-x-auto p-4 md:p-6">
+      <table class="w-full border-collapse min-w-[560px]">
+        <thead><tr class="border-b border-line">
+          <th class="py-3 pr-4 text-left sticky left-0 bg-coal"></th>
+          ${headerCells}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="px-5 md:px-6 pb-6 flex flex-wrap gap-3">
+      ${motos.map(m => `
+        <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hola, quiero cotizar la '+BRANDS[m.brand].name+' '+m.model+' ('+formatCOP(m.price)+').')}" target="_blank" rel="noopener"
+          class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 transition-colors text-white text-xs font-medium px-3.5 py-2 rounded-md">
+          <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Cotizar ${m.model}
+        </a>`).join('')}
+    </div>`;
+
+  const modal = document.getElementById('compareModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  lucide.createIcons();
+  modal.querySelector('[data-close-compare]').addEventListener('click', closeCompare);
+}
+
+function closeCompare(){
+  const modal = document.getElementById('compareModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+document.getElementById('compareModal').addEventListener('click', (e) => {
+  if (e.target.id === 'compareModal') closeCompare();
+});
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+let toastTimer = null;
+function showToast(msg){
+  let el = document.getElementById('toast');
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-coal2 border border-line text-white text-sm px-4 py-2.5 rounded-lg shadow-xl fade-in';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add('hidden'), 2600);
+}
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+function handleSearch(val){
+  state.query = val;
+  renderGrid();
+}
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  document.getElementById('searchInputMobile').value = e.target.value;
+  handleSearch(e.target.value);
+});
+document.getElementById('searchInputMobile').addEventListener('input', (e) => {
+  document.getElementById('searchInput').value = e.target.value;
+  handleSearch(e.target.value);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape'){ closeDetail(); closeCompare(); }
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+renderBrandStrip();
+renderHeroBrandRow();
+renderGrid();
+renderCompareBar();
+lucide.createIcons();
+</script>
+</body>
+</html>
